@@ -11,4 +11,9 @@ ROOT_DIR = Path(__file__).parent.parent.absolute()
 load_dotenv(ROOT_DIR / '.env')
 
 # Db config
+POSTGRES_USER = os.environ.get('POSTGRES_USER')
+POSTGRES_PASSWORD = os.environ.get('POSTGRES_PASSWORD')
+POSTGRES_DB = os.environ.get('POSTGRES_DB')
+POSTGRES_HOST = os.environ.get('POSTGRES_HOST')
+POSTGRES_PORT = os.environ.get('POSTGRES_PORT')
 DB_URI = os.environ.get('DB_URI')
