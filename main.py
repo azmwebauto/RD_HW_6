@@ -23,7 +23,7 @@ async def main(filepath: str):
         asyncio.create_task(parse_json(semaphore, os.path.join(root, file)))
 
         for root, dirs, files in os.walk(filepath)
-            for file in files[:10]
+            for file in files
                 if file.endswith(".json") and 'delta' not in file
     )
     logging.info(f'reading {len(results)=}')
