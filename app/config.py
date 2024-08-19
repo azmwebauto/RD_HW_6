@@ -1,3 +1,4 @@
+import logging
 import os
 
 from pathlib import Path
@@ -16,4 +17,7 @@ POSTGRES_PASSWORD = os.environ.get('POSTGRES_PASSWORD')
 POSTGRES_DB = os.environ.get('POSTGRES_DB')
 POSTGRES_HOST = os.environ.get('POSTGRES_HOST')
 POSTGRES_PORT = os.environ.get('POSTGRES_PORT')
-DB_URI = os.environ.get('DB_URI')
+
+DB_URI = f'postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/app'
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
