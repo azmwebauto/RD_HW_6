@@ -43,7 +43,7 @@ async def main(filepath: str, max_open_file_limit: int = 1000):
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--file', required=True)
-    parser.add_argument('-f', '--max_open_file_limit',
+    parser.add_argument('-max', '--max_open_file_limit',
                         type=int, default=1000, help='Maximum number of open files')
     return parser.parse_args()
 
