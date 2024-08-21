@@ -15,9 +15,9 @@ async def parse_json(semaphore, file_path):
             return json.loads(await f.read())
 
 
-async def main(filepath: str):
+async def main(filepath: str, max_open_file_limit: int = 1000):
     logging.info(filepath)
-    semaphore = asyncio.Semaphore(5000)
+    semaphore = asyncio.Semaphore(max_open_file_limit)
 
     results = tuple(
         asyncio.create_task(parse_json(semaphore, os.path.join(root, file)))
@@ -43,8 +43,11 @@ async def main(filepath: str):
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--file', required=True)
+    parser.add_argument('-f', '--max_open_file_limit',
+                        type=int, default=1000, help='Maximum number of open files')
     return parser.parse_args()
 
 
 if __name__ == '__main__':
-    asyncio.run(main(get_args().file))
+    args = get_args()
+    asyncio.run(main(args.file, args.max_open_file_limit))
