@@ -1,43 +1,50 @@
 import argparse
 import asyncio
-import json
 import logging
 import os
+import time
 
-import aiofiles.os
+from sqlalchemy.ext.asyncio import AsyncEngine
 
-from app import database, crud
+from app import database, crud, serializers
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
-async def parse_json(semaphore, file_path):
-    async with semaphore:
-        async with aiofiles.open(file_path, 'r', encoding='utf-8') as f:
-            return json.loads(await f.read())
+async def save_to_db(engine: AsyncEngine, results: list[dict]):
+    async with database.make_session(engine) as session:
+        try:
+            await crud.add_cves(session, results)
+            await session.commit()
+        except Exception as e:
+            logging.error(e)
+            await session.rollback()
 
 
 async def main(filepath: str, max_open_file_limit: int = 1000):
     logging.info(filepath)
-    semaphore = asyncio.Semaphore(max_open_file_limit)
+    engine = database.create_engine()
 
-    results = tuple(
-        asyncio.create_task(parse_json(semaphore, os.path.join(root, file)))
-
-        for root, dirs, files in os.walk(filepath)
-            for file in files
-                if file.endswith(".json") and 'delta' not in file
-    )
-    logging.info(f'reading {len(results)=}')
-    results = await asyncio.gather(*results)
-
-    logging.info(f'inserting {len(results)=}')
-    async with database.make_session(database.create_engine()) as session:
-        try:
-            await crud.save_cve_to_db(session, results)
-            await session.commit()
-        except Exception as e:
-            logging.exception(e)
-            await session.rollback()
-    logging.info('Finished!')
+    files = tuple(os.path.join(root, file) for root, dirs, files in os.walk(filepath) for file in files if
+              file.endswith(".json") and 'delta' not in file)
+    saving_tasks = [
+        asyncio.create_task(
+            save_to_db(
+                engine,
+                filter(
+                    lambda file: file is not None,
+                    (
+                        serializers.serialize_cve_record(file)
+                        for file in await asyncio.gather(
+                        *tuple(serializers.parse_json(file) for file in batched_files)
+                    )
+                    )
+                )
+            )
+        )
+        for batched_files in serializers.batcher(files, batch_size=max_open_file_limit)
+    ]
+    await asyncio.gather(*saving_tasks)
 
 
 def get_args():
@@ -49,5 +56,8 @@ def get_args():
 
 
 if __name__ == '__main__':
+    start = time.perf_counter()
     args = get_args()
     asyncio.run(main(args.file, args.max_open_file_limit))
+    end = time.perf_counter()
+    logging.info(f'Finished in {end - start:.2f} seconds')

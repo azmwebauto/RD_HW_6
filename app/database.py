@@ -14,7 +14,7 @@ from app import config
 def create_engine():
     return create_async_engine(
         config.DB_URI,
-        echo=False,
+        # echo=True,
     )
 
 
