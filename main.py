@@ -3,6 +3,7 @@ import asyncio
 import logging
 import os
 import time
+from typing import Generator
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -11,7 +12,7 @@ from app import database, crud, serializers
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
-async def save_to_db(engine: AsyncEngine, results: list[dict]):
+async def save_to_db(engine: AsyncEngine, results: Generator[dict]):
     async with database.make_session(engine) as session:
         try:
             await crud.add_cves(session, results)
