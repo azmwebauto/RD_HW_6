@@ -12,7 +12,7 @@ from app import database, crud, serializers
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
-async def save_to_db(engine: AsyncEngine, results: Generator[dict]):
+async def save_to_db(engine: AsyncEngine, results: Generator[dict, None, None]):
     async with database.make_session(engine) as session:
         try:
             await crud.add_cves(session, results)
